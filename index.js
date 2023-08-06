@@ -1,16 +1,40 @@
 let metronomeIsRun = false;
+let readerCursorIndex = 0;
+let bpm = 120;
+let readerIsFocused = false;
 
 document.getElementById('start').onclick = e => {
     if (!metronomeIsRun) {
         metronomeIsRun = true;
         e.target.textContent = 'Stop';
-        runMetronome();
-        runRhythm();
+        readerCursorIndex = rhythm.selectionStart;
+        runRhythm(true);
     } else {
         metronomeIsRun = false;
         e.target.textContent = 'Start';
     }
 };
+
+reset.onclick = () => 
+    readerCursorIndex = 0;
+
+BPM.onchange = event => 
+    bpm = +event.target.value ?? 120;
+
+rhythm.onclick = () => {
+    if (readerIsFocused) return;
+    readerIsFocused = true;
+}
+
+rhythm.onblur = () => {
+    if (readerIsFocused) 
+        readerIsFocused = false;
+}
+
+/*rhythm.onmouseleave = () => {
+    if (readerIsFocused) 
+        readerIsFocused = false;
+}*/
 
 rhythm.oninput = event => {
     if (event.data === null) return;
@@ -34,11 +58,11 @@ function beep(frequency) {
 
 function runMetronome() {
     beep(880);
-    if (metronomeIsRun) setTimeout(runMetronome, 60 * 1000 / (+document.getElementById('BPM').value ?? 120) );
+    if (metronomeIsRun) setTimeout(runMetronome, 60 * 1000 / bpm);
 }
 
-async function runRhythm() {
-    let durationOf4 = 60 * 1000 / (+document.getElementById('BPM').value ?? 120);
+async function runRhythm(isManualStart) {
+    let durationOf4 = 60 * 1000 / bpm;
     let durationOf8 = durationOf4 / 2;
     let durationOf16 = durationOf8 / 2;
     const noteDurationMap = {
@@ -48,25 +72,42 @@ async function runRhythm() {
         '2': durationOf8,
         '⁰': durationOf16,
         '¹': durationOf16,
-        '²': durationOf16
+        '²': durationOf16,
+        '|': 0, //metronome
+        '\n': 0
     };
-    //const notes = Array.prototype.map.call(rhythm.value, note => noteDurationMap[note]);
-    const notes = rhythm.value;
-    
-    for (const note of notes) {
-        if (!metronomeIsRun) break;
-        const duration = noteDurationMap[note];
-        if (!duration) continue;
 
-        if (!['.', '0', '⁰'].includes(note)) 
+    /* if (isManualStart) 
+     let note = rhythm.value[readerCursorIndex];
+    if (isManualStart && !['|', '\n'].includes(note)) //начать метроном
+    */
+    
+    for (; rhythm.value[readerCursorIndex] && metronomeIsRun; readerCursorIndex++) {
+        const note = rhythm.value[readerCursorIndex];
+
+        const duration = noteDurationMap[note];
+        if (duration === void 0) continue;
+
+        if (!readerIsFocused) {
+            rhythm.focus(); 
+            rhythm.selectionStart = rhythm.selectionEnd = readerCursorIndex;
+        }
+
+        if (note === '|' || note === '\n') 
+            beep(880);
+        else if (!['.', '0', '⁰'].includes(note)) 
             beep(440);
 
         await new Promise(res => setTimeout(res, duration));
     }
 
-    if (isLooped.checked === true && metronomeIsRun) runRhythm();
+    if (isLooped.checked === true && metronomeIsRun) {
+        readerCursorIndex = 0;
+        runRhythm();
+    };
 }
 
 //document.addEventListener('keydown', event => {});
 //⁰²⁰²|12⁰¹⁰²|¹²⁰¹
 //1.21|.2²¹.|1⁰².2|.2¹².|1⁰².2|1⁰².2|1.21|.2..
+//rhythm.focus(); rhythm.selectionStart = rhythm.selectionEnd = 4; установит позицию курсора на 4
