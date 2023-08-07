@@ -20,8 +20,8 @@ function toggleStart() {
 /* 
 
 добавить смену темпа при смещении курсора вне блока с другим темпом
-починить ввод скобки ")"
 
+исправлен баг со скобкой
 добавлено смена темпа на лету(120), 
 Если указано однозначное число:
 1) 0 вернёт в изначальный темп, 1 - предыдущий
@@ -56,7 +56,7 @@ rhythm.oninput = event => {
     let replace = '';
     if (['@','"'].includes(event.data)) replace = '²';
     if ('!' === event.data) replace = '¹';
-    if (')' === event.data) replace = '⁰';
+    if ('0' === event.data) replace = '⁰';
     if (['#','№'].includes(event.data)) replace = '³';
 
     if (replace) 
@@ -123,11 +123,10 @@ async function runRhythm() {
                 else bpm *= value / 2;
             } else if (['x','X','х','Х'].includes(value[0])) {
                 const val = value.slice(1, value.length);
-                if (!+val) continue;
-                bpm *= val;
+                if (+val) bpm *= val;
             } else if (value.length > 1 && +value) 
                 bpm = +value;
-
+            
             readerCursorIndex = endExpressionIndex;
             noteDurationMap = calculateDurations(bpm);
             continue;
