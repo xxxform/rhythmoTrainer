@@ -18,11 +18,14 @@ function toggleStart() {
 }
 
 /* 
+TODO 
+кнопка расставить тактовые черты согласно указанному пользователем размеру
+кнопка запись ритма
 
-добавить смену темпа при смещении курсора вне блока с другим темпом
+добавлено смена темпа при смещении курсора вне блока с другим темпом
+исправлен баг со скобкой. теперь чтобы ввести 0 нажмите 'o' или 'щ'
 
-исправлен баг со скобкой
-добавлено смена темпа на лету(120), 
+смена темпа на лету(120), 
 Если указано однозначное число:
 1) 0 вернёт в изначальный темп, 1 - предыдущий
 3 перейти в темп соответствующий триолям, 5 - квинтоли 6 - секстолям
@@ -57,7 +60,7 @@ rhythm.oninput = event => {
     if (['@','"'].includes(event.data)) replace = '²';
     if ('!' === event.data) replace = '¹';
     if ('0' === event.data) replace = '⁰';
-    if (['#','№'].includes(event.data)) replace = '³';
+    if (['o','щ'].includes(event.data)) replace = '0';
 
     if (replace) 
         rhythm.setRangeText(
@@ -99,35 +102,53 @@ function calculateDurations(bpm) {
     };
 }
 
+function calculateBpm(expression, bpm) { //expression 0,1,2 same effect
+    if (expression.length === 1 && +expression) {
+        if (expression === '1' || expression === '0') bpm = +BPM.value; // установит стартовый bpm
+        else bpm *= expression / 2; // установит bpm для нестандартного деления такта(триоли, квинтоли...)
+    } else if (['x','X','х','Х'].includes(expression[0])) {
+        const val = expression.slice(1, expression.length);
+        if (+val) bpm *= val; // установит указанный множитель bpm
+    } else if (expression.length > 1 && +expression) 
+        bpm = +expression; // установит указанный bpm
+    return bpm;
+}
+
+// Вернёт -1 если скобка выражения не закрыта/открыта
+function readExpression(fromIndex, toLeft) {
+    let [fromSymbol, toSymbol] = toLeft ? [')', '('] : ['(', ')'];
+    const method = `${toLeft ? 'lastI' : 'i'}ndexOf`;
+
+    let from = rhythm.value[method](fromSymbol, fromIndex);
+    if (from === -1) return -1;
+    let to = rhythm.value[method](toSymbol, from);
+    if (to === -1) return -1;
+    if (from > to) [from, to] = [to, from];
+
+    return {to, value: rhythm.value.slice(++from, to)};
+}
+
 async function runRhythm() {
-    let noteDurationMap = calculateDurations(bpm);
-    
     let prevNote = rhythm.value[readerCursorIndex - 1];
 
     //клик метронома для стартовой позиции и только пройденных тактовых черт
     if ([undefined, '|', '\n'].includes(prevNote))  
         beep(880);
 
+    //каждый запуск проверяет в каком блоке темпа находится курсор
+    const result = readExpression(readerCursorIndex, true);
+    bpm = calculateBpm(result.value ?? '0', +BPM.value);
+    let noteDurationMap = calculateDurations(bpm);
+
     for (; rhythm.value[readerCursorIndex] && metronomeIsRun; readerCursorIndex++) {
         const note = rhythm.value[readerCursorIndex];
 
         //Смена темпа
-        if (note === '(') { 
-            const endExpressionIndex = rhythm.value.indexOf(')', readerCursorIndex);
-            if (endExpressionIndex === -1) continue;
-
-            const value = rhythm.value.slice(readerCursorIndex + 1, endExpressionIndex);
-            
-            if (value.length === 1 && +value) {
-                if (value === '1' || value === '0') bpm = +BPM.value;
-                else bpm *= value / 2;
-            } else if (['x','X','х','Х'].includes(value[0])) {
-                const val = value.slice(1, value.length);
-                if (+val) bpm *= val;
-            } else if (value.length > 1 && +value) 
-                bpm = +value;
-            
-            readerCursorIndex = endExpressionIndex;
+        if (note === '(') {
+            const result = readExpression(readerCursorIndex);
+            if (result === -1) continue;
+            bpm = calculateBpm(result.value, +BPM.value);
+            readerCursorIndex = result.to;
             noteDurationMap = calculateDurations(bpm);
             continue;
         }
@@ -153,12 +174,10 @@ async function runRhythm() {
 
     //Конец воспроизведения(пользователь не нажимал стоп)
     if (metronomeIsRun) {
-        bpm = +BPM.value;
-
         if (isLooped.checked === true) {
             readerCursorIndex = 0;
             runRhythm();
-        } else { // остановить
+        } else { // перенести курсор на край поля ввода и остановить
             rhythm.selectionStart = rhythm.selectionEnd = rhythm.value.length;
             toggleStart();
         }  
@@ -175,8 +194,14 @@ document.addEventListener('keydown', event => {
 //⁰²⁰²|12⁰¹⁰²|¹²⁰¹
 //1⁰¹11|⁰²21.|¹²¹²12|⁰²212
 //122|122|¹²¹²¹²|122 6/8
-//333|1212|.. триолиz
+//333|1212|.. триоли
 //1212|(3)122122(1)|1212|1212
+/*
+1.21|.2¹².|1⁰².1|.2¹².|
+(x0.5)1⁰².2|1⁰².2|1.21|.2..
+(3)122122|(1)1212
+1212|1.21
+*/
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
