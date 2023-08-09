@@ -28,7 +28,8 @@ TODO
 стиль сокращения нет/все/letry
 
 добавлено 
-кнопка запись ритма
+запись ритма
+чтобы ввести ) используйте 0. для ввода ⁰ используйте shift+)
 
 чтобы ввести 0 нажмите 'o' или 'щ'
 смена темпа на лету(120), 
@@ -133,7 +134,8 @@ rhythm.oninput = event => {
     let replace = '';
     if (['@','"'].includes(event.data)) replace = '²';
     if ('!' === event.data) replace = '¹';
-    if ('0' === event.data) replace = '⁰';
+    if (')' === event.data) replace = '⁰';
+    if ('0' === event.data) replace = ')';
     if (['o','щ'].includes(event.data)) replace = '0';
 
     if (replace) 
