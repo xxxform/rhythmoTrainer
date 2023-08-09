@@ -23,14 +23,13 @@ function readerToggle() {
 
 /* 
 TODO 
-кнопка разложить/свернуть
-кнопка расставить тактовые черты согласно указанному пользователем размеру
 стиль сокращения нет/все/letry
 
 добавлено 
-запись ритма
-чтобы ввести ) используйте 0. для ввода ⁰ используйте shift+)
+кнопка разложить/свернуть
+кнопка расставить тактовые черты согласно указанному пользователем размеру
 
+чтобы ввести ) используйте 0. для ввода ⁰ используйте shift+)
 чтобы ввести 0 нажмите 'o' или 'щ'
 смена темпа на лету(120), 
 Если указано однозначное число:
@@ -42,6 +41,48 @@ xN умножить темп на число 2 4 .5
 const recordClickHandler = durationOf8 => {
     //длительность удержания 16я нота для квантайза клика
     clickedToTime = performance.now() + durationOf8 / 2;
+}
+
+collapse.onclick = toggleCollapse;
+
+line.onclick = () => {
+    runUncollapse();
+    rhythm.value = rhythm.value.replaceAll('|','');
+    let countOfLines = Math.floor(rhythm.value.length / size.value / 2);
+    
+    for(let pastedLines = 0; pastedLines < countOfLines; pastedLines++) {
+        //(кол-во 16х до line) * (смещение индекса на следующий блок 16х) (учёт смещения всех индексов после вставки |)
+        const indexOfLine = (size.value * 2) * (pastedLines + 1) + pastedLines; 
+        rhythm.setRangeText('|', indexOfLine, indexOfLine, 'end');
+    }
+    
+    if (reduce.checked) runCollapse();
+}
+
+function toggleCollapse() {
+    if (collapse.textContent == 'Развернуть') {
+        collapse.textContent = 'Свернуть';
+        runUncollapse();
+    } else {
+        collapse.textContent = 'Развернуть';
+        runCollapse();
+    }
+}
+
+function runUncollapse() {
+    let rhythmContent = rhythm.value;
+    rhythmContent = rhythmContent.replaceAll('.', '⁰⁰');
+    rhythmContent = rhythmContent.replaceAll('1', '¹⁰');
+    rhythmContent = rhythmContent.replaceAll('2', '²⁰');
+    rhythm.value = rhythmContent;
+}
+
+function runCollapse() {
+    let rhythmContent = rhythm.value;
+    rhythmContent = rhythmContent.replaceAll('¹⁰', '1');
+    rhythmContent = rhythmContent.replaceAll('²⁰', '2');
+    rhythmContent = rhythmContent.replaceAll('⁰⁰', '.');
+    rhythm.value = rhythmContent;
 }
 
 record.onclick = recordToggle;
@@ -233,8 +274,9 @@ async function runRhythm() {
             rhythm.selectionStart = rhythm.selectionEnd = readerCursorIndex;
         }
 
-        if (note === '|' || note === '\n') 
-            beep(880);
+        if (note === '|' || note === '\n') {
+            if (metronome.checked) beep(880);
+        }
         else if (note === '1' || note === '¹') {
             beep(587.32);
         } else if (!['.', '0', '⁰'].includes(note)) 
