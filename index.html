@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <head>
     <script defer src="./index.js"></script>
+    <style>
+    body {
+        text-align: center;
+    }
+    #BPM {
+        width: 4em;
+    }
+    #size {
+        width: 3em;
+    }
+    #record {
+        color:red;
+    }
+    </style>
 </head>
 <body>
-    <label><input placeholder="BPM" id="BPM" type="number" value="120"></label>
-    <button id="startButton">Start</button><button id="reset">Reset</button><button id="genRandomRhythm">Случайный ритм</button><br>
+    <button id="startButton">▶</button><button id="record">⏺</button><button id="reset">Сброс</button><button id="genRandomRhythm">Случайный</button><input title="+ реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
+    <input title="метроном" id="metronome" checked type="checkbox"><input placeholder="BPM" id="BPM" type="number" value="120"><input placeholder="Размер" type="number" id="size" value="4">/8 <input title="сворачивать ритм" id="reduce" checked type="checkbox"><br>
     <label><textarea placeholder="Введите ритм" id="rhythm"></textarea><input title="зациклить" id="isLooped" checked type="checkbox"></label><br>
-    <label>+ реакция на отпускание<input id="keyUpReaction" type="checkbox"></label>
 </body>
