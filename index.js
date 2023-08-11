@@ -8,6 +8,13 @@ startButton.onclick = readerToggle;
 let clickedToTime = 0;
 let bindedRecordClickHandler = () => {}
 
+let localization = {
+    '16pause': '𝄿',
+    '8pause': '𝄾',
+    '8': '𝅘𝅥𝅮',
+    '16': '𝅘𝅥𝅯'
+};
+
 function readerToggle() {
     if (!readerIsRun) {
         if (recordIsRun) recordToggle();
@@ -23,9 +30,11 @@ function readerToggle() {
 
 /* 
 TODO 
-стиль сокращения нет/все/letry
+составные инструкции(х2,3) или через; 
+локализация
 
 добавлено 
+стиль сокращения нет/все/no8in16
 кнопка разложить/свернуть
 кнопка расставить тактовые черты согласно указанному пользователем размеру
 
@@ -56,7 +65,7 @@ line.onclick = () => {
         rhythm.setRangeText('|', indexOfLine, indexOfLine, 'end');
     }
     
-    if (reduce.checked) runCollapse();
+    if (reduce.value) runCollapse();
 }
 
 function toggleCollapse() {
@@ -78,11 +87,67 @@ function runUncollapse() {
 }
 
 function runCollapse() {
-    let rhythmContent = rhythm.value;
-    rhythmContent = rhythmContent.replaceAll('¹⁰', '1');
-    rhythmContent = rhythmContent.replaceAll('²⁰', '2');
-    rhythmContent = rhythmContent.replaceAll('⁰⁰', '.');
-    rhythm.value = rhythmContent;
+    if (reduce.value === 'all') {
+        let rhythmContent = rhythm.value;
+        rhythmContent = rhythmContent.replaceAll('¹⁰', '1');
+        rhythmContent = rhythmContent.replaceAll('²⁰', '2');
+        rhythmContent = rhythmContent.replaceAll('⁰⁰', '.');
+        rhythm.value = rhythmContent;
+    } else if (reduce.value === 'no8in16') {
+        let indexFromBar = 0;
+
+        for (let i = 0; i < rhythm.value.length; i++) {
+            const symbol = rhythm.value[i];
+            if (symbol === '|' || symbol === '\n') {
+                indexFromBar = 0;
+                continue;
+            } 
+
+            if (rhythm.value[i + 1] === '⁰') {
+                if (indexFromBar % 2) {
+                    indexFromBar++;
+                    continue;
+                }
+                const replaceSymbolMap = {
+                    '⁰': '.',
+                    '¹': '1',
+                    '²': '2'
+                };
+
+                if (replaceSymbolMap[symbol]) {
+                    rhythm.setRangeText(replaceSymbolMap[symbol], i,  i+2, 'end');
+                    indexFromBar = 0;
+                    continue;
+                }
+            }
+
+            indexFromBar++;
+        }
+    }
+}
+
+function reduceLast() {
+    let last = rhythm.value[rhythm.value.length - 1];
+
+    if (reduce.value === 'all') {
+        if (last === '¹') rhythm.setRangeText('1', rhythm.value.length - 1,  rhythm.value.length, 'end');
+        else if (last === '²') rhythm.setRangeText('2', rhythm.value.length - 1,  rhythm.value.length, 'end');
+        else if (last === '⁰') rhythm.setRangeText('.', rhythm.value.length - 1,  rhythm.value.length, 'end');
+        else rhythm.value += '⁰';
+    } else if (reduce.value === 'no8in16') {
+        if (last === '⁰') { rhythm.setRangeText('.', rhythm.value.length - 1,  rhythm.value.length, 'end'); return }
+        let i = 0;
+
+        for (; i < rhythm.value.length; i++) 
+            if (['1', '2', '|', '.', '\n'].includes(rhythm.value[rhythm.value.length - 1 - i])) break;
+        
+        if (!(i % 2)) //СОКРАЩАТЬ НЕЛЬЗЯ - ИНДЕКС ТЕКУЩЕГО СИМВОЛА НЕЧЁТНЫЙ ОТ НАЧАЛА СЕРИИ 16Х 
+            rhythm.value += '⁰';  
+        else 
+            if (last === '¹') rhythm.setRangeText('1', rhythm.value.length - 1,  rhythm.value.length, 'end');
+            else if (last === '²') rhythm.setRangeText('2', rhythm.value.length - 1,  rhythm.value.length, 'end');
+            else rhythm.value += '⁰';  
+    }
 }
 
 record.onclick = recordToggle;
@@ -110,27 +175,21 @@ function recordToggle() {
 
                 document.addEventListener('mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 if (keyUpReaction.checked) document.addEventListener('mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
-
+                //Запись
                 intervalId = setInterval(() => {
                     const now = performance.now();
                     if (now < clickedToTime) rhythm.value += '¹';
-                    else {
-                        if (reduce.checked) {
-                            const last = rhythm.value[rhythm.value.length - 1];
-                            if (last === '¹') rhythm.setRangeText('1', rhythm.value.length - 1,  rhythm.value.length, 'end');
-                            else if (last === '⁰') rhythm.setRangeText('.', rhythm.value.length - 1,  rhythm.value.length, 'end');
-                            else rhythm.value += '⁰';
-                        } else {
-                            rhythm.value += '⁰';
-                        }
+                    else { //сейчас 16 пауза 
+                        if (reduce.value) reduceLast();
+                        else rhythm.value += '⁰';
                     }
 
                     if (!--countDown) {
                         if (metronome.checked) beep(880);
                         countDown = sizeValue * 2;
                         rhythm.value += '|'; 
-                    } else if (countDown === sizeValue && metronome.checked) 
-                        beep(880);
+                    } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
+                        beep(784);
 
                 }, durationOf8 / 2);
 
@@ -241,6 +300,7 @@ function readExpression(fromIndex, toLeft) {
 }
 
 async function runRhythm() {
+    if (!rhythm.value.length) return;
     let prevNote = rhythm.value[readerCursorIndex - 1];
 
     //клик метронома для стартовой позиции и только пройденных тактовых черт
@@ -300,7 +360,8 @@ async function runRhythm() {
 document.addEventListener('keydown', event => {
     if (event.code === 'Space' && !readerIsFocused) {
         event.preventDefault();
-        readerToggle();
+        if (recordIsRun) recordToggle();
+        else readerToggle();
     }
 });
 //ритмы
