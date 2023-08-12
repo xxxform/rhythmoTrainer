@@ -30,14 +30,16 @@ function readerToggle() {
 
 /* 
 TODO 
-составные инструкции(х2,3) или через; 
 локализация
 
 добавлено 
+составные инструкции(х1.2,3) (x0.5,3)
+
 стиль сокращения нет/все/no8in16
 кнопка разложить/свернуть
 кнопка расставить тактовые черты согласно указанному пользователем размеру
 
+для телефонов где нет спец символов: ! - ¹, @ - ², ) - ⁰
 чтобы ввести ) используйте 0. для ввода ⁰ используйте shift+)
 чтобы ввести 0 нажмите 'o' или 'щ'
 смена темпа на лету(120), 
@@ -273,16 +275,19 @@ function calculateDurations(bpm) {
     };
 }
 
-function calculateBpm(expression, bpm) { //expression 0,1,2 same effect
-    if (expression.length === 1 && +expression) {
-        if (expression === '1' || expression === '0') bpm = +BPM.value; // установит стартовый bpm
-        else bpm *= expression / 2; // установит bpm для нестандартного деления такта(триоли, квинтоли...)
-    } else if (['x','X','х','Х'].includes(expression[0])) {
-        const val = expression.slice(1, expression.length);
-        if (+val) bpm *= val; // установит указанный множитель bpm
-    } else if (expression.length > 1 && +expression) 
-        bpm = +expression; // установит указанный bpm
-    return bpm;
+function calculateBpm(expression, bpm) {
+    return expression.split(',').reduce((bpm, expression) => {
+        expression = expression.trim();
+        if (expression.length === 1 && +expression) {
+            if (expression === '1' || expression === '0') bpm = +BPM.value; // установит стартовый bpm
+            else bpm *= expression / 2; // установит bpm для нестандартного деления такта(триоли, квинтоли...)
+        } else if (['x','X','х','Х'].includes(expression[0])) {
+            const val = expression.slice(1, expression.length);
+            if (+val) bpm *= val; // установит указанный множитель bpm
+        } else if (expression.length > 1 && +expression) 
+            bpm = +expression; // установит указанный bpm
+        return bpm;
+    }, bpm);
 }
 
 // Вернёт -1 если скобка выражения не закрыта/открыта
