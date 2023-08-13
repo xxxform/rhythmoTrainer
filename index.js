@@ -8,19 +8,6 @@ startButton.onclick = readerToggle;
 let clickedToTime = 0;
 let bindedRecordClickHandler = () => {}
 
-let localNotes = {
-    'p8': '𝄾',
-    'a8': '𝅘𝅥𝅮',
-    'n8': '𝅘𝅥𝅮',
-    'p16': '𝄿',
-    'n16': '𝅘𝅥𝅯',
-    'a16': '𝅘𝅥𝅯'
-};
-
-let localMR = {
-
-};
-
 function readerToggle() {
     if (!readerIsRun) {
         if (recordIsRun) recordToggle();
@@ -36,9 +23,11 @@ function readerToggle() {
 
 /* 
 TODO 
-локализация
+Редизайн, тестирование
 
 добавлено 
+при клике кнопки "нота" шрифт меняется на мой, в котором вместо цифр - ноты
+
 Теперь для ввода 0 и ) ничего не нужно
 составные инструкции(х1.2,3) (x0.5,3)
 
@@ -62,6 +51,14 @@ const recordClickHandler = durationOf8 => {
 
 collapse.onclick = toggleCollapse;
 
+noteView.onclick = () => {
+    if (noteView.checked) {
+       rhythm.style.cssText = 'font-family: mymusicfont';
+    } else {
+        rhythm.style.cssText = '';
+    }
+}
+
 line.onclick = () => {
     runUncollapse();
     rhythm.value = rhythm.value.replaceAll('|','');
@@ -82,6 +79,7 @@ function toggleCollapse() {
         runUncollapse();
     } else {
         collapse.textContent = 'Развернуть';
+        if (!reduce.value) reduce.value = 'no8in16';
         runCollapse();
     }
 }
