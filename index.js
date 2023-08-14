@@ -6,7 +6,9 @@ let readerIsFocused = false;
 let intervalId = null;
 startButton.onclick = readerToggle;
 let clickedToTime = 0;
+let isUnaccented = false;
 let bindedRecordClickHandler = () => {}
+let bindedRecordKeyDownHandler = () => {}
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -25,12 +27,14 @@ function readerToggle() {
 TODO 
 Редизайн, тестирование
 
-добавлено 
+добавлено
+запись акцентов
+кнопки клавиатуры I(акцент),O
+для телефонов тап по полю ввода(акцент) или вне
+левая кнопка мыши(акцент), любая другая - без акцента
+
 при клике кнопки "нота" шрифт меняется на мой, в котором вместо цифр - ноты
-
-Теперь для ввода 0 и ) ничего не нужно
 составные инструкции(х1.2,3) (x0.5,3)
-
 стиль сокращения нет/все/no8in16
 кнопка разложить/свернуть
 кнопка расставить тактовые черты согласно указанному пользователем размеру
@@ -43,10 +47,21 @@ TODO
 3 перейти в темп соответствующий триолям, 5 - квинтоли 6 - секстолям
 xN умножить темп на число 2 4 .5
 */
+const recordKeyDownHandler = (durationOf8, event) => {
+    if (event.code === 'KeyO' || event.code === 'KeyI') {
+        clickedToTime = performance.now() + durationOf8 / 2;
+        isUnaccented = false;
+        if (event.code === 'KeyO') isUnaccented = true;
+    }
+}
 
-const recordClickHandler = durationOf8 => {
+const recordClickHandler = (durationOf8, e) => {
     //длительность удержания 16я нота для квантайза клика
     clickedToTime = performance.now() + durationOf8 / 2;
+    isUnaccented = false;
+    
+    if (e.button) isUnaccented = true;
+    if (e.target === rhythm) isUnaccented = true;
 }
 
 collapse.onclick = toggleCollapse;
@@ -178,12 +193,13 @@ function recordToggle() {
                 rhythm.value += '|'; 
                 countDown = sizeValue * 2;
 
+                document.addEventListener('keydown', bindedRecordKeyDownHandler = recordKeyDownHandler.bind(null, durationOf8));
                 document.addEventListener('mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 if (keyUpReaction.checked) document.addEventListener('mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 //Запись
                 intervalId = setInterval(() => {
                     const now = performance.now();
-                    if (now < clickedToTime) rhythm.value += '¹';
+                    if (now < clickedToTime) rhythm.value += isUnaccented ? '²' : '¹';
                     else { //сейчас 16 пауза 
                         if (reduce.value) reduceLast();
                         else rhythm.value += '⁰';
@@ -203,6 +219,7 @@ function recordToggle() {
 
 
     } else {
+        document.removeEventListener('keydown', bindedRecordKeyDownHandler);
         document.removeEventListener('mousedown', bindedRecordClickHandler);
         document.removeEventListener('mouseup', bindedRecordClickHandler);
         clearInterval(intervalId);
