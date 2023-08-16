@@ -1,4 +1,4 @@
-# rhythmoTrainer alpha 0.1
+# rhythmoTrainer beta 1.0
 
 Тренажер музыкального чувства ритма
 

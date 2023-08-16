@@ -26,11 +26,10 @@ function readerToggle() {
 
 /* 
 TODO 
-Редизайн, тестирование
+тестирование
 
 добавлено
-Проверка чек нот вью при загрузки страницы
-Устранена задержка при записи ритма с телефона
+Редизайн
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -95,11 +94,11 @@ line.onclick = () => {
 }
 
 function toggleCollapse() {
-    if (collapse.textContent == 'Развернуть') {
-        collapse.textContent = 'Свернуть';
+    if (collapse.textContent == '<>') {
+        collapse.textContent = '><';
         runUncollapse();
     } else {
-        collapse.textContent = 'Развернуть';
+        collapse.textContent = '<>';
         if (!reduce.value) reduce.value = 'no8in16';
         runCollapse();
     }

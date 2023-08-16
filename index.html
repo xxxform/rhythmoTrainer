@@ -23,6 +23,7 @@
         font-family: Arial, Helvetica, sans-serif;
     }
     textarea {
+        height: 15em;
         outline: none;
     }
     </style>
@@ -30,10 +31,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
 </head>
 <body>
-    <button id="startButton">▶</button><button id="record">⏺</button><br>
-    <button id="reset">Сброс</button><button id="genRandomRhythm">Случайный</button><button id="collapse">Развернуть</button><button title="расставить тактовые черты" id="line">|</button><input title="+ реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
-    <select id="reduce"><option value="">Без сокращений</option> <option value="all">Все</option> <option selected value="no8in16">Без 8х в 16х</option></select> <label title="Отображать как ноты">♪<input id="noteView" type="checkbox"></label><br>
-    <input title="метроном" id="metronome" checked type="checkbox"><input placeholder="BPM" id="BPM" type="number" value="120"><input placeholder="Размер" type="number" id="size" value="4">/8<br>
+    <br>
+    <button id="startButton">▶</button><button id="record">⏺</button><input title="метроном" id="metronome" checked type="checkbox"><input placeholder="BPM" id="BPM" type="number" value="120"><input placeholder="Размер" type="number" id="size" value="4">/8 <label title="Отображать как ноты">♪<input id="noteView" type="checkbox"></label><br>
     <textarea placeholder="Введите ритм" id="rhythm"></textarea><input title="зациклить" id="isLooped" checked type="checkbox"><br>
+    <button id="reset">🗑</button><button title="Случайный ритм" id="genRandomRhythm">?</button><button title="Развернуть/Свернуть" id="collapse">&lt;&gt;</button><button title="Расставить тактовые черты" id="line">|</button><select title="Стиль сокращения" id="reduce"><option value="">Не сокращать</option> <option value="all">Все</option> <option selected value="no8in16">Без 8х в 16х</option></select> <input title="+ реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
 </body>
 </html>
