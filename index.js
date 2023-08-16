@@ -9,6 +9,7 @@ let clickedToTime = 0;
 let isUnaccented = false;
 let bindedRecordClickHandler = () => {}
 let bindedRecordKeyDownHandler = () => {}
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -28,6 +29,9 @@ TODO
 Редизайн, тестирование
 
 добавлено
+Проверка чек нот вью при загрузки страницы
+Устранена задержка при записи ритма с телефона
+
 запись акцентов
 кнопки клавиатуры I(акцент),O
 для телефонов тап по полю ввода(акцент) или вне
@@ -66,7 +70,9 @@ const recordClickHandler = (durationOf8, e) => {
 
 collapse.onclick = toggleCollapse;
 
-noteView.onclick = () => {
+document.addEventListener('DOMContentLoaded', checkNoteView);
+noteView.onclick = checkNoteView;
+function checkNoteView() {
     if (noteView.checked) {
        rhythm.style.cssText = 'font-family: mymusicfont';
     } else {
@@ -194,8 +200,8 @@ function recordToggle() {
                 countDown = sizeValue * 2;
 
                 document.addEventListener('keydown', bindedRecordKeyDownHandler = recordKeyDownHandler.bind(null, durationOf8));
-                document.addEventListener('mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
-                if (keyUpReaction.checked) document.addEventListener('mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
+                document.addEventListener(isMobile ? 'touchstart' : 'mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
+                if (keyUpReaction.checked) document.addEventListener(isMobile ? 'touchend' : 'mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 //Запись
                 intervalId = setInterval(() => {
                     const now = performance.now();
@@ -220,8 +226,8 @@ function recordToggle() {
 
     } else {
         document.removeEventListener('keydown', bindedRecordKeyDownHandler);
-        document.removeEventListener('mousedown', bindedRecordClickHandler);
-        document.removeEventListener('mouseup', bindedRecordClickHandler);
+        document.removeEventListener(isMobile ? 'touchstart' : 'mousedown', bindedRecordClickHandler);
+        document.removeEventListener(isMobile ? 'touchend' : 'mouseup', bindedRecordClickHandler);
         clearInterval(intervalId);
         recordIsRun = false;
         record.textContent = '⏺';
