@@ -24,6 +24,7 @@ function readerToggle() {
 
 /* 
 TODO 
+динамическая смена значения реакции на отпускание
 тестирование
 
 добавлено
@@ -243,6 +244,18 @@ genRandomRhythm.onclick = () => {
 reset.onclick = () => {
     rhythm.value = '';
     readerCursorIndex = 0;
+}
+
+keyUpReaction.onchange = e => {
+    if (recordIsRun) {
+        if (keyUpReaction.checked) {
+            document.addEventListener('keyup', recordKeyHandler);
+            document.addEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
+        } else {
+            document.removeEventListener('keyup', recordKeyHandler);
+            document.removeEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
+        }
+    }
 }
 
 BPM.onchange = event => 
