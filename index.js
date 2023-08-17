@@ -8,6 +8,7 @@ startButton.onclick = readerToggle;
 let clickHasBeen = false;
 let isUnaccented = false;
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+let inputLag = +inputLagElement.value || 0;
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -206,11 +207,23 @@ function recordToggle() {
                 }
                 //Запись
                 intervalId = setInterval(() => {
-                    if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
-                    else { //сейчас 16 пауза 
-                        if (reduce.value) reduceLast();
-                        else rhythm.value += '⁰';
-                    }
+                    if (inputLag) setTimeout(() => { //dry нельзя, нужна производительность
+                        if (clickHasBeen) 
+                            rhythm.value += isUnaccented ? '²' : '¹';
+                        else { //сейчас 16 пауза 
+                            if (reduce.value) reduceLast();
+                            else rhythm.value += '⁰';
+                        }
+                        clickHasBeen = false;
+                    }, inputLag);
+                    else {
+                        if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
+                        else { //сейчас 16 пауза 
+                            if (reduce.value) reduceLast();
+                            else rhythm.value += '⁰';
+                        }
+                        clickHasBeen = false;
+                    };
 
                     if (!--countDown) {
                         if (metronome.checked) beep(880);
@@ -218,7 +231,6 @@ function recordToggle() {
                         rhythm.value += '|'; 
                     } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
                         beep(784);
-                    clickHasBeen = false;
                 }, durationOf8 / 2);
 
             } else beep(880);
@@ -260,6 +272,9 @@ keyUpReaction.onchange = e => {
 
 BPM.onchange = event => 
     bpm = +event.target.value ?? 120;
+
+inputLagElement.onchange = () => 
+    inputLag = +inputLagElement.value || 0;
 
 rhythm.onclick = () => {
     if (readerIsFocused) return;
@@ -409,6 +424,7 @@ async function runRhythm() {
 }
 
 document.addEventListener('keydown', event => {
+    if (event.target === inputLagElement) return;
     if (recordIsRun) event.preventDefault();
     if (event.code === 'Space' && (recordIsRun || !readerIsFocused)) {
         event.preventDefault();
