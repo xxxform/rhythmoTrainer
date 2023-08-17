@@ -10,6 +10,8 @@ let isUnaccented = false;
 let bindedRecordClickHandler = () => {}
 let bindedRecordKeyDownHandler = () => {}
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+let prevRecordTickTime = 0;
+let inputLag = +inputLagElement.value || 0;
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -29,6 +31,9 @@ TODO
 тестирование
 
 добавлено
+поле inputLag для исправления задержки при вводе с телефона
+Улучшена точность записи. фикс лага setInterval.  
+
 Редизайн
 
 запись акцентов
@@ -202,9 +207,12 @@ function recordToggle() {
                 document.addEventListener(isMobile ? 'touchstart' : 'mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 if (keyUpReaction.checked) document.addEventListener(isMobile ? 'touchend' : 'mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
                 //Запись
+                prevRecordTickTime = performance.now();
                 intervalId = setInterval(() => {
                     const now = performance.now();
-                    if (now < clickedToTime) rhythm.value += isUnaccented ? '²' : '¹';
+                    const lag = now - (prevRecordTickTime + durationOf8 / 2);
+                    prevRecordTickTime = now; //
+                    if (now - lag < clickedToTime - inputLag) rhythm.value += isUnaccented ? '²' : '¹';
                     else { //сейчас 16 пауза 
                         if (reduce.value) reduceLast();
                         else rhythm.value += '⁰';
@@ -245,6 +253,9 @@ reset.onclick = () => {
 
 BPM.onchange = event => 
     bpm = +event.target.value ?? 120;
+
+inputLagElement.onchange = event => 
+    inputLag = +inputLagElement.value || 0;
 
 rhythm.onclick = () => {
     if (readerIsFocused) return;
