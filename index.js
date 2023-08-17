@@ -5,13 +5,9 @@ let bpm = 120;
 let readerIsFocused = false;
 let intervalId = null;
 startButton.onclick = readerToggle;
-let clickedToTime = 0;
+let clickHasBeen = false;
 let isUnaccented = false;
-let bindedRecordClickHandler = () => {}
-let bindedRecordKeyDownHandler = () => {}
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
-let prevRecordTickTime = 0;
-let inputLag = +inputLagElement.value || 0;
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -31,10 +27,8 @@ TODO
 тестирование
 
 добавлено
-поле inputLag для исправления задержки при вводе с телефона
-Улучшена точность записи. фикс лага setInterval.  
-
-Редизайн
+оптимизация
+убрано лишнее
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -55,21 +49,21 @@ TODO
 3 перейти в темп соответствующий триолям, 5 - квинтоли 6 - секстолям
 xN умножить темп на число 2 4 .5
 */
-const recordKeyDownHandler = (durationOf8, event) => {
+const recordKeyHandler = event => {
     if (event.code === 'KeyO' || event.code === 'KeyI') {
-        clickedToTime = performance.now() + durationOf8 / 2;
+        clickHasBeen = true;
         isUnaccented = false;
         if (event.code === 'KeyO') isUnaccented = true;
     }
 }
 
-const recordClickHandler = (durationOf8, e) => {
+const recordClickHandler = event => {
     //длительность удержания 16я нота для квантайза клика
-    clickedToTime = performance.now() + durationOf8 / 2;
+    clickHasBeen = true;
     isUnaccented = false;
     
-    if (e.button) isUnaccented = true;
-    if (e.target === rhythm) isUnaccented = true;
+    if (event.button) isUnaccented = true;
+    if (event.target === rhythm) isUnaccented = true;
 }
 
 collapse.onclick = toggleCollapse;
@@ -203,16 +197,15 @@ function recordToggle() {
                 rhythm.value += '|'; 
                 countDown = sizeValue * 2;
 
-                document.addEventListener('keydown', bindedRecordKeyDownHandler = recordKeyDownHandler.bind(null, durationOf8));
-                document.addEventListener(isMobile ? 'touchstart' : 'mousedown', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
-                if (keyUpReaction.checked) document.addEventListener(isMobile ? 'touchend' : 'mouseup', bindedRecordClickHandler = recordClickHandler.bind(null, durationOf8));
+                document.addEventListener('keydown', recordKeyHandler);
+                document.addEventListener(isMobile ? 'touchstart' : 'mousedown', recordClickHandler);
+                if (keyUpReaction.checked) {
+                    document.addEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
+                    document.addEventListener('keyup', recordKeyHandler);
+                }
                 //Запись
-                prevRecordTickTime = performance.now();
                 intervalId = setInterval(() => {
-                    const now = performance.now();
-                    const lag = now - (prevRecordTickTime + durationOf8 / 2);
-                    prevRecordTickTime = now; //
-                    if (now - lag < clickedToTime - inputLag) rhythm.value += isUnaccented ? '²' : '¹';
+                    if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
                     else { //сейчас 16 пауза 
                         if (reduce.value) reduceLast();
                         else rhythm.value += '⁰';
@@ -224,7 +217,7 @@ function recordToggle() {
                         rhythm.value += '|'; 
                     } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
                         beep(784);
-
+                    clickHasBeen = false;
                 }, durationOf8 / 2);
 
             } else beep(880);
@@ -232,9 +225,10 @@ function recordToggle() {
 
 
     } else {
-        document.removeEventListener('keydown', bindedRecordKeyDownHandler);
-        document.removeEventListener(isMobile ? 'touchstart' : 'mousedown', bindedRecordClickHandler);
-        document.removeEventListener(isMobile ? 'touchend' : 'mouseup', bindedRecordClickHandler);
+        document.removeEventListener('keydown', recordKeyHandler);
+        document.removeEventListener('keyup', recordKeyHandler);
+        document.removeEventListener(isMobile ? 'touchstart' : 'mousedown', recordClickHandler);
+        document.removeEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
         clearInterval(intervalId);
         recordIsRun = false;
         record.textContent = '⏺';
@@ -253,9 +247,6 @@ reset.onclick = () => {
 
 BPM.onchange = event => 
     bpm = +event.target.value ?? 120;
-
-inputLagElement.onchange = event => 
-    inputLag = +inputLagElement.value || 0;
 
 rhythm.onclick = () => {
     if (readerIsFocused) return;
@@ -405,7 +396,8 @@ async function runRhythm() {
 }
 
 document.addEventListener('keydown', event => {
-    if (event.code === 'Space' && !readerIsFocused) {
+    if (recordIsRun) event.preventDefault();
+    if (event.code === 'Space' && (recordIsRun || !readerIsFocused)) {
         event.preventDefault();
         if (recordIsRun) recordToggle();
         else readerToggle();
