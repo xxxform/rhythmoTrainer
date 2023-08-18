@@ -207,30 +207,42 @@ function recordToggle() {
                 }
                 //Запись
                 intervalId = setInterval(() => {
-                    if (inputLag) setTimeout(() => { //dry нельзя, нужна производительность
-                        if (clickHasBeen) 
-                            rhythm.value += isUnaccented ? '²' : '¹';
-                        else { //сейчас 16 пауза 
-                            if (reduce.value) reduceLast();
-                            else rhythm.value += '⁰';
-                        }
-                        clickHasBeen = false;
-                    }, inputLag);
-                    else {
+                    if (inputLag) {
+                        setTimeout(() => {
+                            if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
+                            else { //сейчас 16 пауза 
+                                if (reduce.value) reduceLast();
+                                else rhythm.value += '⁰';
+                            }
+                            if (countDown === sizeValue * 2) 
+                                rhythm.value += '|'; 
+                            
+                            clickHasBeen = false;
+                        }, inputLag);
+                        
+                        if (!--countDown) {
+                            if (metronome.checked) beep(880);
+                            countDown = sizeValue * 2;
+                        } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
+                            beep(784);
+
+                    } else {
                         if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
                         else { //сейчас 16 пауза 
                             if (reduce.value) reduceLast();
                             else rhythm.value += '⁰';
                         }
+    
+                        if (!--countDown) {
+                            if (metronome.checked) beep(880);
+                            countDown = sizeValue * 2;
+                            rhythm.value += '|'; 
+                        } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
+                            beep(784);
+                        
                         clickHasBeen = false;
-                    };
-
-                    if (!--countDown) {
-                        if (metronome.checked) beep(880);
-                        countDown = sizeValue * 2;
-                        rhythm.value += '|'; 
-                    } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
-                        beep(784);
+                    }
+                    
                 }, durationOf8 / 2);
 
             } else beep(880);
