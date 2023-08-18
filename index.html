@@ -13,7 +13,10 @@
     #BPM {
         width: 4em;
     }
-    #size, #inputLagElement {
+    #size {
+        width: 3em;
+    }
+    #inputLagElement {
         width: 3em;
     }
     #record {
@@ -34,6 +37,6 @@
     <br>
     <button id="startButton">▶</button><button id="record">⏺</button><input title="метроном" id="metronome" checked type="checkbox"><input placeholder="BPM" id="BPM" type="number" value="120"><input placeholder="Размер" type="number" id="size" value="4">/8 <label title="Отображать как ноты">♪<input id="noteView" type="checkbox"></label><br>
     <textarea placeholder="Введите ритм" id="rhythm"></textarea><input title="зациклить" id="isLooped" checked type="checkbox"><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="reset">🗑</button><button title="Случайный ритм" id="genRandomRhythm">?</button><button title="Развернуть/Свернуть" id="collapse">&lt;&gt;</button><button title="Расставить тактовые черты" id="line">|</button><select title="Стиль сокращения" id="reduce"><option value="">Не сокращать</option> <option value="all">Все</option> <option selected value="no8in16">Без 8х в 16х</option></select> <input type="number" title="Задержка реакции на нажатие" id="inputLagElement" value="" placeholder="ms"><input title="Реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="reset">🗑</button><button title="Случайный ритм" id="genRandomRhythm">?</button><button title="Развернуть/Свернуть" id="collapse">&lt;&gt;</button><button title="Расставить тактовые черты" id="line">|</button><select title="Стиль сокращения" id="reduce"><option value="">Нет</option> <option value="all">Все</option> <option selected value="no8in16">Без 8 в 16</option></select><input title="Калибровка задержки" id="calibrationCheckBox" type="checkbox"><input type="number" title="Задержка реакции на нажатие" id="inputLagElement" value="" placeholder="ms"><input title="Реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
 </body>
 </html>

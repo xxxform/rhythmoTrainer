@@ -9,6 +9,9 @@ let clickHasBeen = false;
 let isUnaccented = false;
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
 let inputLag = +inputLagElement.value || 0;
+let calibration = calibrationCheckBox.checked = false;
+let clickTime = 0;
+const calibrationOffsets = [];
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -53,6 +56,7 @@ xN умножить темп на число 2 4 .5
 */
 const recordKeyHandler = event => {
     if (event.code === 'KeyO' || event.code === 'KeyI') {
+        if (calibration) clickTime = performance.now();
         clickHasBeen = true;
         isUnaccented = false;
         if (event.code === 'KeyO') isUnaccented = true;
@@ -61,6 +65,7 @@ const recordKeyHandler = event => {
 
 const recordClickHandler = event => {
     //длительность удержания 16я нота для квантайза клика
+    if (calibration) clickTime = performance.now();
     clickHasBeen = true;
     isUnaccented = false;
     
@@ -205,6 +210,7 @@ function recordToggle() {
                     document.addEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
                     document.addEventListener('keyup', recordKeyHandler);
                 }
+                //let countOfStableTicks = 0;
                 //Запись
                 intervalId = setInterval(() => {
                     if (inputLag) {
@@ -243,6 +249,27 @@ function recordToggle() {
                         clickHasBeen = false;
                     }
                     
+                    if (calibration && countDown % 2) { //т.к время учёта после прохождения 16ой
+                        const prevTickTime = performance.now() - durationOf8 / 2;
+                        // Если offset < 0 - клик был до черты, если > 0 - после. максимальное значение - длительность 16й.
+                        const offset = clickTime - prevTickTime; 
+                        //const lagValue = +inputLagElement.value;
+                        
+                        if (Math.abs(offset) > durationOf8 / 2) 
+                            return;
+                        
+                        calibrationOffsets.push(offset);
+                        const sum = calibrationOffsets.reduce((prev, current) => prev + current);
+                        const avg = Math.round(sum / calibrationOffsets.length);
+                        
+                        inputLagElement.value = inputLag = avg;
+
+                        /*if (Math.abs(lagValue - avg) < 2) {
+                            countOfStableTicks++;
+                            if (countOfStableTicks === 20) recordToggle();
+                        } else 
+                            countOfStableTicks = 0; */
+                    }
                 }, durationOf8 / 2);
 
             } else beep(880);
@@ -250,6 +277,10 @@ function recordToggle() {
 
 
     } else {
+        if (calibration) {
+            calibrationCheckBox.checked = false;
+            calibration = false;
+        }
         document.removeEventListener('keydown', recordKeyHandler);
         document.removeEventListener('keyup', recordKeyHandler);
         document.removeEventListener(isMobile ? 'touchstart' : 'mousedown', recordClickHandler);
@@ -268,6 +299,20 @@ genRandomRhythm.onclick = () => {
 reset.onclick = () => {
     rhythm.value = '';
     readerCursorIndex = 0;
+}
+
+calibrationCheckBox.onchange = e => {
+    if (e.target.checked) {
+        calibration = true;
+        size.value = 4;
+        calibrationOffsets.length = 0;
+        inputLagElement.value = '';
+        inputLag = 0;
+        if (!recordIsRun) recordToggle();
+    } else {
+        if (recordIsRun) recordToggle();
+        calibration = false;
+    }
 }
 
 keyUpReaction.onchange = e => {
