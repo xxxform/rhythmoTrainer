@@ -28,12 +28,10 @@ function readerToggle() {
 
 /* 
 TODO 
-динамическая смена значения реакции на отпускание
 тестирование
 
 добавлено
 оптимизация
-убрано лишнее
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -251,12 +249,15 @@ function recordToggle() {
                     
                     if (calibration && countDown % 2) { //т.к время учёта после прохождения 16ой
                         const prevTickTime = performance.now() - durationOf8 / 2;
-                        // Если offset < 0 - клик был до черты, если > 0 - после. максимальное значение - длительность 16й.
-                        const offset = clickTime - prevTickTime; 
-                        //const lagValue = +inputLagElement.value;
-                        
-                        if (Math.abs(offset) > durationOf8 / 2) 
+                        // Если offset < 0 - клик был до черты(восьмой), если > 0 - после. максимальное значение - длительность 16й.
+                        let offset = clickTime - prevTickTime; 
+                        if (Math.abs(offset) > durationOf8 / 2) //если пользователь не нажимал в течении предыдущей 8ой - не учитывать
                             return;
+
+                        if (offset < 0)  //если задержка очень большая, > 16, клик переходит на следующую, до черты
+                            offset = durationOf8 - offset;
+                        
+                        //const lagValue = +inputLagElement.value;
                         
                         calibrationOffsets.push(offset);
                         const sum = calibrationOffsets.reduce((prev, current) => prev + current);
