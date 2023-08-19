@@ -29,6 +29,7 @@ function readerToggle() {
 /* 
 TODO 
 тестирование
+убрать квинту при одновременном звучании
 
 добавлено
 оптимизация
@@ -229,7 +230,7 @@ function recordToggle() {
                             countDown = sizeValue * 2;
                         } else if (countDown === sizeValue && metronome.checked && !(sizeValue % 2)) 
                             beep(784);
-
+                        // Благодаря задержке ввода, мы попадаем в место после 16го тика, даже если кликнули чуть раньше. 
                     } else {
                         if (clickHasBeen) rhythm.value += isUnaccented ? '²' : '¹';
                         else { //сейчас 16 пауза 
@@ -247,18 +248,14 @@ function recordToggle() {
                         clickHasBeen = false;
                     }
                     
-                    if (calibration && countDown % 2) { //т.к время учёта после прохождения 16ой
-                        const prevTickTime = performance.now() - durationOf8 / 2;
-                        // Если offset < 0 - клик был до черты(восьмой), если > 0 - после. максимальное значение - длительность 16й.
-                        let offset = clickTime - prevTickTime; 
-                        if (Math.abs(offset) > durationOf8 / 2) //если пользователь не нажимал в течении предыдущей 8ой - не учитывать
-                            return;
+                    if (calibration && countDown < 7 && !(countDown % 2)) { 
+                        const prevTickTime = performance.now() - durationOf8 + durationOf8 / 4; 
+                        // offset < 0 - клик был до 32й после восьмой, > 0 - после
+                        let offset = clickTime - prevTickTime; //где произошел клик в течении 8й
 
-                        if (offset < 0)  //если задержка очень большая, > 16, клик переходит на следующую, до черты
-                            offset = durationOf8 - offset;
-                        
-                        //const lagValue = +inputLagElement.value;
-                        
+                        if (offset < 0) //если задержка < чем 32я от такта ничего не надо менять
+                           return;
+
                         calibrationOffsets.push(offset);
                         const sum = calibrationOffsets.reduce((prev, current) => prev + current);
                         const avg = Math.round(sum / calibrationOffsets.length);
