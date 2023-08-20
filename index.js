@@ -29,10 +29,12 @@ function readerToggle() {
 /* 
 TODO 
 тестирование
-убрать квинту при одновременном звучании
+автоматическая остановка калибровки
+возможность калибровки не в 4/4
+обратный отсчёт для 6/8
 
 добавлено
-оптимизация
+убрать квинту при одновременном звучании
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -363,12 +365,12 @@ rhythm.oninput = event => {
         );
 }
 
-function beep(frequency) {
+function beep(frequency, offset = 0) {
     let ctx = new AudioContext();
     let osc = ctx.createOscillator();
     osc.frequency.value = frequency;
     osc.connect(ctx.destination);
-    osc.start(0);
+    osc.start(offset);
     setTimeout(() => osc.stop(), 100);
 }
 
@@ -445,7 +447,6 @@ async function runRhythm() {
             continue;
         }
 
-        //if (note === '\ud834') //считать ноту, первая часть суррогатной пары
         const duration = noteDurationMap[note];
 
         if (duration === void 0) continue; //пропускаем неизвестные символы
@@ -456,7 +457,7 @@ async function runRhythm() {
         }
 
         if (note === '|' || note === '\n') {
-            if (metronome.checked) beep(880);
+            if (metronome.checked) beep(880, 0.0001);
         }
         else if (note === '1' || note === '¹') {
             beep(587.32);
