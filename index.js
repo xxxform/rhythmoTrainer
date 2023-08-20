@@ -34,7 +34,7 @@ TODO
 обратный отсчёт для 6/8
 
 добавлено
-убрать квинту при одновременном звучании
+отмена "убрать квинту при одновременном звучании". это баг Firefox
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -365,12 +365,12 @@ rhythm.oninput = event => {
         );
 }
 
-function beep(frequency, offset = 0) {
+function beep(frequency) {
     let ctx = new AudioContext();
     let osc = ctx.createOscillator();
     osc.frequency.value = frequency;
     osc.connect(ctx.destination);
-    osc.start(offset);
+    osc.start(0);
     setTimeout(() => osc.stop(), 100);
 }
 
@@ -457,7 +457,7 @@ async function runRhythm() {
         }
 
         if (note === '|' || note === '\n') {
-            if (metronome.checked) beep(880, 0.001);
+            if (metronome.checked) beep(880);
         }
         else if (note === '1' || note === '¹') {
             beep(587.32);
