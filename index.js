@@ -457,7 +457,7 @@ async function runRhythm() {
         }
 
         if (note === '|' || note === '\n') {
-            if (metronome.checked) beep(880, 0.0001);
+            if (metronome.checked) beep(880, 0.001);
         }
         else if (note === '1' || note === '¹') {
             beep(587.32);
