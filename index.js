@@ -67,7 +67,10 @@ const recordKeyHandler = event => {
 
 const recordClickHandler = event => {
     //длительность удержания 16я нота для квантайза клика
-    if (calibration) clickTime = performance.now();
+    if (calibration) {
+        if (event.target === record || event.target === calibrationCheckBox) return;
+        clickTime = performance.now();
+    }
     clickHasBeen = true;
     isUnaccented = false;
     
@@ -212,7 +215,8 @@ function recordToggle() {
                     document.addEventListener(isMobile ? 'touchend' : 'mouseup', recordClickHandler);
                     document.addEventListener('keyup', recordKeyHandler);
                 }
-                //let countOfStableTicks = 0;
+                let countOfStableTicks = 0;
+                let stableValue = 0;
                 //Запись
                 intervalId = setInterval(() => {
                     if (inputLag) {
@@ -262,14 +266,21 @@ function recordToggle() {
                         calibrationOffsets.push(offset);
                         const sum = calibrationOffsets.reduce((prev, current) => prev + current);
                         const avg = Math.round(sum / calibrationOffsets.length);
+
+                        if (stableValue || Math.abs(inputLagElement.value - avg) < 2) {
+                            if (!stableValue) stableValue = avg;
+                            if (Math.abs(stableValue - avg) < 2) {
+                                if (++countOfStableTicks === 15) recordToggle();
+                            } else {
+                                stableValue = 0;
+                                countOfStableTicks = 0;
+                            }
+                        } else {
+                            stableValue = 0;
+                            countOfStableTicks = 0;
+                        }
                         
                         inputLagElement.value = inputLag = avg;
-
-                        /*if (Math.abs(lagValue - avg) < 2) {
-                            countOfStableTicks++;
-                            if (countOfStableTicks === 20) recordToggle();
-                        } else 
-                            countOfStableTicks = 0; */
                     }
                 }, durationOf8 / 2);
 
