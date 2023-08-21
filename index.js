@@ -30,12 +30,11 @@ function readerToggle() {
 /* 
 TODO 
 тестирование
-автоматическая остановка калибровки
-возможность калибровки не в 4/4
-обратный отсчёт для 6/8
 
 добавлено
-отмена "убрать квинту при одновременном звучании". это баг Firefox
+возможность калибровки не в 4/4
+обратный отсчёт для 6/8
+автоматическая остановка калибровки
 
 запись акцентов
 кнопки клавиатуры I(акцент),O
@@ -191,7 +190,7 @@ record.onclick = recordToggle;
 function recordToggle() {
     if (!recordIsRun) {
         const sizeValue = +size.value || 4;
-        let countDown = sizeValue;
+        let countDown = sizeValue * 2;
         if (!+countDown) return;
 
         if (readerIsRun) readerToggle();
@@ -199,7 +198,7 @@ function recordToggle() {
         record.textContent = '■';
         const durationOf8 = calculateDurations(+BPM.value)[1];
 
-        beep(880); //Обратный отсчёт
+        beep(880); //2 такта обратного отсчёта
         
         intervalId = setInterval(() => {
             if (--countDown === 0) { 
@@ -284,8 +283,21 @@ function recordToggle() {
                     }
                 }, durationOf8 / 2);
 
-            } else beep(880);
-        }, durationOf8 * 2);
+            } else {
+                if (countDown % (sizeValue / 2)) {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    gainNode.gain.value = .5;
+                    osc.frequency.value = 784;
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.start(0);
+                    setTimeout(() => {osc.stop(); gainNode.disconnect();}, 100);
+                } else 
+                    beep(880);
+            }
+            
+        }, durationOf8);
 
 
     } else {
@@ -316,7 +328,6 @@ reset.onclick = () => {
 calibrationCheckBox.onchange = e => {
     if (e.target.checked) {
         calibration = true;
-        size.value = 4;
         calibrationOffsets.length = 0;
         inputLagElement.value = '';
         inputLag = 0;
