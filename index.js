@@ -12,6 +12,7 @@ let inputLag = +inputLagElement.value || 0;
 let calibration = calibrationCheckBox.checked = false;
 let clickTime = 0;
 const calibrationOffsets = [];
+let ctx = new AudioContext();
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -366,7 +367,6 @@ rhythm.oninput = event => {
 }
 
 function beep(frequency) {
-    let ctx = new AudioContext();
     let osc = ctx.createOscillator();
     osc.frequency.value = frequency;
     osc.connect(ctx.destination);
