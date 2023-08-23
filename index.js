@@ -91,15 +91,20 @@ function checkNoteView() {
 
 line.onclick = () => {
     runUncollapse();
-    rhythm.value = rhythm.value.replaceAll('|','');
-    let countOfLines = Math.floor(rhythm.value.length / size.value / 2);
-    
-    for(let pastedLines = 0; pastedLines < countOfLines; pastedLines++) {
-        //(кол-во 16х до line) * (смещение индекса на следующий блок 16х) (учёт смещения всех индексов после вставки |)
-        const indexOfLine = (size.value * 2) * (pastedLines + 1) + pastedLines; 
-        rhythm.setRangeText('|', indexOfLine, indexOfLine, 'end');
-    }
-    
+
+    const finalString = rhythm.value.split('\n').map(string => {
+        string = string.replaceAll('|','');
+        let countOfLines = Math.floor(string.length / size.value / 2);
+        string = string.split('');
+        
+        for(let pastedLines = 0; pastedLines < countOfLines; pastedLines++) {
+            //(кол-во 16х до line) * (смещение индекса на следующий блок 16х) (учёт смещения всех индексов после вставки |)
+            const indexOfLine = (size.value * 2) * (pastedLines + 1) + pastedLines; 
+            string.splice(indexOfLine, 0 ,'|');
+        }
+        return string.join('');
+    }).join('\n');
+    rhythm.value = finalString;
     if (reduce.value) runCollapse();
 }
 
