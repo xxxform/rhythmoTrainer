@@ -23,11 +23,17 @@
         color:red;
     }
     #rhythm {
-        font-family: Arial, Helvetica, sans-serif;
-    }
-    textarea {
         height: 15em;
         outline: none;
+    }
+    textarea {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    #key {
+        width: 2em;
+    }
+    .fromToInput {
+        width: 2em;
     }
     </style>
     <title>Тренажер ритма</title>
@@ -37,6 +43,13 @@
     <br>
     <button id="startButton">▶</button><button id="record">⏺</button><input title="метроном" id="metronome" checked type="checkbox"><input placeholder="BPM" id="BPM" type="number" value="120"><input placeholder="Размер" type="number" id="size" value="4">/8 <label title="Отображать как ноты">♪<input id="noteView" type="checkbox"></label><br>
     <textarea placeholder="Введите ритм" id="rhythm"></textarea><input title="зациклить" id="isLooped" checked type="checkbox"><br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button id="reset">🗑</button><button title="Случайный ритм" id="genRandomRhythm">?</button><button title="Развернуть/Свернуть" id="collapse">&lt;&gt;</button><button title="Расставить тактовые черты" id="line">|</button><select title="Стиль сокращения" id="reduce"><option value="">Нет</option> <option value="all">Все</option> <option selected value="no8in16">Без 8 в 16</option></select><input title="Калибровка задержки" id="calibrationCheckBox" type="checkbox"><input type="number" title="Задержка реакции на нажатие" id="inputLagElement" value="" placeholder="ms"><input title="Реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
+    &nbsp;&nbsp;&nbsp;<input title="Озвучивать ноты" id="noteColorEnable" type="checkbox"><button id="reset">🗑</button><button title="Случайный ритм" id="genRandomRhythm">?</button><button title="Развернуть/Свернуть" id="collapse">&lt;&gt;</button><button title="Расставить тактовые черты" id="line">|</button><select title="Стиль сокращения" id="reduce"><option value="">Нет</option> <option value="all">Все</option> <option selected value="no8in16">Без 8 в 16</option></select><input title="Калибровка задержки" id="calibrationCheckBox" type="checkbox"><input type="number" title="Задержка реакции на нажатие" id="inputLagElement" value="" placeholder="ms"><input title="Реакция на отпускание" id="keyUpReaction" type="checkbox"><br>
+    <div id="colorsWrapper" style="display: none;">
+        <textarea id="notesColor" placeholder="Введите краски(1-6, shift+1-6)"></textarea><br>
+        <input class="fromToInput" type="number" title="от" placeholder="от" id="colorsFrom" value="3">
+        <input class="fromToInput" type="number" title="до" placeholder="до" id="colorsTo" value="2">
+        <button title="Случайные краски" id="genRandomColors">?</button>
+        <input title="Атональный режим" id="atonalMode" type="checkbox"><input title="ближайший звук" id="nearSound" type="checkbox"> <input type="text" id="key" value="C5">
+    </div>
 </body>
 </html>

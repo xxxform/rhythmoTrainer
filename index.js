@@ -13,6 +13,23 @@ let calibration = calibrationCheckBox.checked = false;
 let clickTime = 0;
 const calibrationOffsets = [];
 let ctx = new AudioContext();
+const notesArr = ['C','','D','','E','F','','G','','A','','B'];
+const arr = ['F','C','G','D','A','E','B']; //семиричный алфавит звуковой системы. 
+const fifthLoadMap = {
+    '₆': -6,
+    '₅': -5,
+    '₄': -4,
+    '₃': -3,
+    '₂': -2,
+    '₁': -1,
+    '⁰': 0,
+    '¹': 1,
+    '²': 2,
+    '³': 3,
+    '⁴': 4,
+    '⁵': 5,
+    '⁶': 6
+};
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -31,7 +48,22 @@ function readerToggle() {
 TODO 
 тестирование
 
+смещать границы октавы при указании другой тоники 
+Модуляция обязательна(Abb G#)
+атональный режим
+кнопка показать ноты меняет все краски на буквы нот
+
+необязательно 
+в красках другой шрифт с саб0 посередине
+сдвиг курсора в ритме при сдвиге его в нотах
+чекбокс синхронизация ввода двух полей  
+event.inputType  deleteContentBackward  deleteContentForward  deleteByCut
+
 добавлено
+Поле ввода ладовых красок для ритма
+цифры 0-6 и shift+ 1-6
+случайные краски
+
 возможность калибровки не в 4/4
 обратный отсчёт для 6/8
 автоматическая остановка калибровки
@@ -55,6 +87,26 @@ TODO
 3 перейти в темп соответствующий триолям, 5 - квинтоли 6 - секстолям
 xN умножить темп на число 2 4 .5
 */
+
+const getOverflowIndex = (i, arrLength) => (i % arrLength + arrLength) % arrLength;
+function getMidiCodeByCountOfFifth(countOfFifths) {
+	return getOverflowIndex((countOfFifths - 1) * 7, 12);
+}
+
+function getCountOfFifthByKey(key) {
+	key = key.toUpperCase();
+	const countOfAlt = key.length - 1;
+	const sign = key[1] == 'B' ? -1 : 1;
+	const ranks = countOfAlt * 7 * (sign == '-1' ? -1 : 1);
+	let index = arr[`${sign == -1 ? 'lastI' : 'i'}ndexOf`](key[0]);
+	
+	return ranks + index;
+}
+
+function getHzByMidiCode(code) { //1.02 до нижней октавы, 1.059 - множитель полутона 12 * 3 подъем на 3 октавы
+    return 1.02197265625 * (1.0594631 ** code) * (1.0594631 ** (12 * 3));
+}
+
 const recordKeyHandler = event => {
     if (event.code === 'KeyO' || event.code === 'KeyI') {
         if (calibration) clickTime = performance.now();
@@ -79,7 +131,44 @@ const recordClickHandler = event => {
 
 collapse.onclick = toggleCollapse;
 
-document.addEventListener('DOMContentLoaded', checkNoteView);
+document.addEventListener('DOMContentLoaded', () => {
+    checkNoteView();
+    noteColorCheckboxChangeHandler({target: noteColorEnable});
+});
+
+noteColorEnable.onchange = noteColorCheckboxChangeHandler;
+
+function noteColorCheckboxChangeHandler(e) {
+    colorsWrapper.style.display = e.target.checked ? 'block' : 'none';
+}
+
+notesColor.oninput = event => {
+    let replace;
+
+    const replaceMap = {
+        '^': '₆',
+        '%': '₅',
+        '$': '₄',
+        '#': '₃',
+        '@': '₂',
+        '!': '₁',
+        '0': '⁰',
+        '1': '¹',
+        '2': '²',
+        '3': '³',
+        '4': '⁴',
+        '5': '⁵',
+        '6': '⁶'
+    };
+
+    if (replace = replaceMap[event.data]) 
+        notesColor.setRangeText(
+            replace, 
+            notesColor.selectionStart - 1, 
+            notesColor.selectionStart, "end"
+        );
+}
+
 noteView.onclick = checkNoteView;
 function checkNoteView() {
     if (noteView.checked) {
@@ -320,6 +409,11 @@ function recordToggle() {
     }
 }
 
+genRandomColors.onclick = () => {
+    const notes = Object.keys(fifthLoadMap);
+    notesColor.value = Array.from(' '.repeat(getRandomInt(0, rhythm.value.length))).map(() => notes[getRandomInt(6 - colorsFrom.value, 6 + (+colorsTo.value))]).join('');
+}
+
 genRandomRhythm.onclick = () => {
     const notes = ['.', '1', '2', '⁰', '¹'];
     rhythm.value = Array.from(' '.repeat(getRandomInt(16, 32))).map(() => notes[getRandomInt(0, 4)]).join('');
@@ -361,12 +455,12 @@ BPM.onchange = event =>
 inputLagElement.onchange = () => 
     inputLag = +inputLagElement.value || 0;
 
-rhythm.onclick = () => {
+rhythm.onclick = notesColor.onclick = () => {
     if (readerIsFocused) return;
     readerIsFocused = true;
 }
 
-rhythm.onblur = () => {
+rhythm.onblur = notesColor.onblur = () => {
     if (readerIsFocused) 
         readerIsFocused = false;
 }
@@ -453,13 +547,26 @@ async function runRhythm() {
     let prevNote = rhythm.value[readerCursorIndex - 1];
 
     //клик метронома для стартовой позиции и только пройденных тактовых черт
-    if ([undefined, '|', '\n'].includes(prevNote))  
+    if (metronome.checked && [undefined, '|', '\n'].includes(prevNote))  
         beep(880);
 
     //каждый запуск проверяет в каком блоке темпа находится курсор
     const result = readExpression(readerCursorIndex, true);
     bpm = calculateBpm(result.value ?? '0', +BPM.value);
     let noteDurationMap = calculateDurations(bpm);
+   
+    //todo вынести наверх
+    const octaveNumberIndex = key.value.search(/[0-9]/);
+    const keyNote = key.value[0];
+    const octave = +key.value[octaveNumberIndex] || 5;
+    const noteAlteration = ~octaveNumberIndex ? key.value.substring(1, octaveNumberIndex) : 0;
+
+    let midiCode = notesArr.indexOf(keyNote.toUpperCase());
+    if (noteAlteration) midiCode += noteAlteration.length * (noteAlteration[0] === '#' || -1);
+    midiCode = (octave * 12) + midiCode;
+    let prevMidiCode = midiCode; 
+    const key5 = getCountOfFifthByKey(keyNote + noteAlteration);
+    let currentNoteIndex = -1;
 
     for (; rhythm.value[readerCursorIndex] && readerIsRun; readerCursorIndex++) {
         const note = rhythm.value[readerCursorIndex];
@@ -486,10 +593,47 @@ async function runRhythm() {
         if (note === '|' || note === '\n') {
             if (metronome.checked) beep(880);
         }
+        else if (noteColorEnable.checked && ['1', '¹', '2', '²'].includes(note)) { //todo закэшировать в переменную noteColorIsEnable noteColorEnable.checked
+            const blockOfNotes = rhythm.value.slice(0, readerCursorIndex);
+            
+            currentNoteIndex = currentNoteIndex === -1 
+                ? +blockOfNotes.match(/1|2|¹|²/g)?.length || 0 
+                : currentNoteIndex + 1;
+
+            //todo закэшировать, инвалидация при изменении
+            const matchAll = Array.from(notesColor.value.matchAll(new RegExp(Object.keys(fifthLoadMap).join('|'), 'g'))); 
+            if (!matchAll.length) return;
+            const match = matchAll[currentNoteIndex] || matchAll[getOverflowIndex(currentNoteIndex, matchAll.length)];
+    
+            const blockOfColors = notesColor.value.slice(0, match.index);
+            let octaveShift = 0;
+            octaveShift += -12 * +(blockOfColors.match(/\./g)?.length || 0);
+            octaveShift += 12 * +(blockOfColors.match(/'/g)?.length || 0);
+
+            //for (let i = match.index - 1; shiftSymbols.includes(notesColor.value[i]); i--)  на оптимизацию  const shiftSymbols = ['.', "'"];
+            //    octaveShift += notesColor.value[match.index - 1] === '.' ? -12 : 12;
+            
+            //todo звук не остается в новой октаве при "ближайший звук" после перемотки нужно вычислять весь путь
+            const countOf5 = fifthLoadMap[match[0]];
+            let midiCode = getMidiCodeByCountOfFifth(countOf5 + key5);
+            const countOf8ToPrev = Math.floor(prevMidiCode / 12); //поднимаем midiCode до октавы предыдущего
+            midiCode = countOf8ToPrev * 12 + midiCode; //подняли по октавам к предыдущему
+            const diff = Math.abs(prevMidiCode - midiCode);
+            
+            //Если новый код > prev опускаем, иначе поднимаем и сравним
+            if (nearSound.checked && midiCode > prevMidiCode && Math.abs(prevMidiCode - (midiCode - 12)) < diff) midiCode = midiCode - 12;
+            else if (nearSound.checked && midiCode < prevMidiCode && Math.abs(prevMidiCode - (midiCode + 12)) < diff) midiCode = midiCode + 12;
+            
+            const hz = getHzByMidiCode(midiCode + octaveShift);
+
+            beep(hz);
+            prevMidiCode = midiCode;
+        }
         else if (note === '1' || note === '¹') {
             beep(587.32);
-        } else if (!['.', '0', '⁰'].includes(note)) 
-            beep(440);
+        } else if (!['.', '0', '⁰'].includes(note)) {
+            beep(440); 
+        }
 
         await new Promise(res => setTimeout(res, duration));
     }
@@ -509,7 +653,7 @@ async function runRhythm() {
 document.addEventListener('keydown', event => {
     if (event.target === inputLagElement) return;
     if (recordIsRun) event.preventDefault();
-    if (event.code === 'Space' && (recordIsRun || !readerIsFocused)) {
+    if (event.code === 'Space' && event.target !== notesColor && (recordIsRun || !readerIsFocused)) {
         event.preventDefault();
         if (recordIsRun) recordToggle();
         else readerToggle();
