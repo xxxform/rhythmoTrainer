@@ -434,6 +434,7 @@ function recordToggle() {
 genRandomColors.onclick = () => {
     const notes = Object.keys(fifthLoadMap);
     notesColor.value = Array.from(' '.repeat(getRandomInt(0, rhythm.value.length))).map(() => notes[getRandomInt(6 - colorsFrom.value, 6 + (+colorsTo.value))]).join('');
+    onlyColorsMatch = Array.from(notesColor.value.matchAll(new RegExp(Object.keys(fifthLoadMap).join('|'), 'g')));
 }
 
 genRandomRhythm.onclick = () => {
