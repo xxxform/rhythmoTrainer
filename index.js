@@ -30,6 +30,9 @@ const fifthLoadMap = {
     '⁵': 5,
     '⁶': 6
 };
+let key5 = 0;
+let prevMidiCode = 0;
+let onlyColorsMatch = []; 
 
 function readerToggle() {
     if (!readerIsRun) {
@@ -134,6 +137,8 @@ collapse.onclick = toggleCollapse;
 document.addEventListener('DOMContentLoaded', () => {
     checkNoteView();
     noteColorCheckboxChangeHandler({target: noteColorEnable});
+    setKey();
+    onlyColorsMatch = Array.from(notesColor.value.matchAll(new RegExp(Object.keys(fifthLoadMap).join('|'), 'g')));
 });
 
 noteColorEnable.onchange = noteColorCheckboxChangeHandler;
@@ -141,6 +146,21 @@ noteColorEnable.onchange = noteColorCheckboxChangeHandler;
 function noteColorCheckboxChangeHandler(e) {
     colorsWrapper.style.display = e.target.checked ? 'block' : 'none';
 }
+
+function setKey() {
+    const octaveNumberIndex = key.value.search(/[0-9]/);
+    const keyNote = key.value[0] || '';
+    const octave = +key.value[octaveNumberIndex] || 5;
+    const noteAlteration = ~octaveNumberIndex ? key.value.substring(1, octaveNumberIndex) : '';
+
+    let midiCode = notesArr.indexOf(keyNote.toUpperCase());
+    if (noteAlteration) midiCode += noteAlteration.length * (noteAlteration[0] === '#' || -1);
+    midiCode = (octave * 12) + midiCode;
+    prevMidiCode = midiCode; 
+    key5 = getCountOfFifthByKey(keyNote + noteAlteration);
+}
+
+key.oninput = setKey;
 
 notesColor.oninput = event => {
     let replace;
@@ -167,6 +187,8 @@ notesColor.oninput = event => {
             notesColor.selectionStart - 1, 
             notesColor.selectionStart, "end"
         );
+    
+    onlyColorsMatch = Array.from(notesColor.value.matchAll(new RegExp(Object.keys(fifthLoadMap).join('|'), 'g')));
 }
 
 noteView.onclick = checkNoteView;
@@ -554,18 +576,6 @@ async function runRhythm() {
     const result = readExpression(readerCursorIndex, true);
     bpm = calculateBpm(result.value ?? '0', +BPM.value);
     let noteDurationMap = calculateDurations(bpm);
-   
-    //todo вынести наверх
-    const octaveNumberIndex = key.value.search(/[0-9]/);
-    const keyNote = key.value[0];
-    const octave = +key.value[octaveNumberIndex] || 5;
-    const noteAlteration = ~octaveNumberIndex ? key.value.substring(1, octaveNumberIndex) : 0;
-
-    let midiCode = notesArr.indexOf(keyNote.toUpperCase());
-    if (noteAlteration) midiCode += noteAlteration.length * (noteAlteration[0] === '#' || -1);
-    midiCode = (octave * 12) + midiCode;
-    let prevMidiCode = midiCode; 
-    const key5 = getCountOfFifthByKey(keyNote + noteAlteration);
     let currentNoteIndex = -1;
 
     for (; rhythm.value[readerCursorIndex] && readerIsRun; readerCursorIndex++) {
@@ -600,10 +610,8 @@ async function runRhythm() {
                 ? +blockOfNotes.match(/1|2|¹|²/g)?.length || 0 
                 : currentNoteIndex + 1;
 
-            //todo закэшировать, инвалидация при изменении
-            const matchAll = Array.from(notesColor.value.matchAll(new RegExp(Object.keys(fifthLoadMap).join('|'), 'g'))); 
-            if (!matchAll.length) return;
-            const match = matchAll[currentNoteIndex] || matchAll[getOverflowIndex(currentNoteIndex, matchAll.length)];
+            if (!onlyColorsMatch.length) return;
+            const match = onlyColorsMatch[currentNoteIndex] || onlyColorsMatch[getOverflowIndex(currentNoteIndex, onlyColorsMatch.length)];
     
             const blockOfColors = notesColor.value.slice(0, match.index);
             let octaveShift = 0;
